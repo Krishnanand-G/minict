@@ -1,5 +1,5 @@
 # minict
 
-tiny container runtime (namespaces + cgroups eventually)
+tiny container runtime
 
-unshare keeps failing without root on my machine. parking this for a bit.
+set MINICT_SIM=1 to fake namespaces/cgroups when youre on windows or dont want sudo.
