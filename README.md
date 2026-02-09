@@ -1,5 +1,5 @@
 # minict
 
-trying to build a tiny container runtime so i understand namespaces better
+tiny container runtime (namespaces + cgroups eventually)
 
-(nothing works yet)
+unshare keeps failing without root on my machine. parking this for a bit.
