@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>minict status</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main>
+    <header>
+      <strong>minict</strong>
+      <span>status</span>
+      <span id="source">loading…</span>
+    </header>
+
+    <p class="cmd">$ minict ps <button id="refresh" type="button">refresh</button></p>
+
+    <h1>containers <span id="count">0</span></h1>
+    <table>
+      <thead>
+        <tr>
+          <th>name</th>
+          <th>state</th>
+          <th>memory.max</th>
+          <th>cpu.max</th>
+          <th>last start</th>
+          <th>command</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+
+    <p class="note">
+      Limits are cgroup v2 style. On Linux they land under
+      <code>/sys/fs/cgroup/minict</code>; with <code>MINICT_SIM=1</code> they
+      go in <code>.minict/cgroups</code>.
+    </p>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

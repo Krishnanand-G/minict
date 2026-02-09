@@ -1,0 +1,100 @@
+body {
+  margin: 0;
+  padding: 24px;
+  background: #111;
+  color: #ddd;
+  font: 14px/1.45 Consolas, "Courier New", monospace;
+}
+
+main {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+header {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  border-bottom: 1px solid #333;
+  padding-bottom: 10px;
+  margin-bottom: 16px;
+}
+
+header strong {
+  color: #7dcea0;
+}
+
+#source {
+  margin-left: auto;
+  color: #888;
+}
+
+.cmd {
+  color: #7dcea0;
+}
+
+button {
+  background: #1a1a1a;
+  color: #ddd;
+  border: 1px solid #444;
+  padding: 4px 10px;
+  font: inherit;
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: #7dcea0;
+}
+
+h1 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 24px 0 8px;
+}
+
+h1 span {
+  color: #888;
+  font-weight: 400;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid #333;
+}
+
+th, td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid #333;
+}
+
+th {
+  color: #888;
+  font-weight: 400;
+}
+
+.state-running {
+  color: #7dcea0;
+}
+
+.state-stopped {
+  color: #c9a227;
+}
+
+.note {
+  margin-top: 20px;
+  color: #888;
+  max-width: 60ch;
+}
+
+code {
+  color: #ddd;
+}
+
+@media (max-width: 640px) {
+  body { padding: 12px; }
+  header { flex-wrap: wrap; }
+  #source { margin-left: 0; width: 100%; }
+  table { display: block; overflow-x: auto; }
+}
