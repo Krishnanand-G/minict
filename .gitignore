@@ -1,0 +1,6 @@
+build/
+.minict/
+*.exe
+*.o
+rootfs/*
+!rootfs/.gitkeep
