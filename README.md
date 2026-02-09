@@ -1,7 +1,11 @@
 # minict
 
-tiny container runtime
+small linux container runtime for learning namespaces + cgroup v2
 
-set MINICT_SIM=1 to fake namespaces/cgroups when youre on windows or dont want sudo.
+## build
+make all
 
-cpu.max is quota/period in usec. i had the units wrong at first.
+## try (sim)
+MINICT_SIM=1 ./build/minict run --memory 64m --cpu 50 --name demo /bin/sh
+./build/minict ps
+./build/minict kill demo
