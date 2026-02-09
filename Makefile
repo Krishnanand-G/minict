@@ -2,7 +2,7 @@ CXX ?= g++
 CXXFLAGS ?= -std=c++14 -Wall -Wextra -Iinclude -Ithird_party/minitest
 BUILD := build
 CORE := src/util.cpp src/namespace.cpp src/cgroup.cpp src/rootfs.cpp src/runtime.cpp
-TESTS := tests/test_util.cpp tests/test_cli_parse.cpp
+TESTS := $(wildcard tests/*.cpp)
 
 all: $(BUILD)/minict
 $(BUILD):
@@ -13,6 +13,8 @@ $(BUILD)/minict_tests: $(CORE) third_party/minitest/minitest.cpp $(TESTS) | $(BU
 	$(CXX) $(CXXFLAGS) $(CORE) third_party/minitest/minitest.cpp $(TESTS) -o $@
 test: $(BUILD)/minict_tests
 	MINICT_SIM=1 ./$(BUILD)/minict_tests
+ui:
+	python3 -m http.server 8080 -d ui
 clean:
 	rm -rf $(BUILD) .minict
-.PHONY: all test clean
+.PHONY: all test ui clean
