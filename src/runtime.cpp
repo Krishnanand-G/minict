@@ -1,6 +1,7 @@
 #include "runtime.hpp"
 #include "namespace.hpp"
 #include "cgroup.hpp"
+#include "rootfs.hpp"
 #include "util.hpp"
 #include <cstdlib>
 #include <sstream>
@@ -86,6 +87,15 @@ RunResult run_container(const Config& in) {
         return result;
     }
 
+#ifdef __linux__
+    if (!c.rootfs.empty() && !sim) {
+        if (access(rootfs_path(c.rootfs).c_str(), F_OK) != 0) {
+            result.detail = "rootfs not found: " + c.rootfs;
+            return result;
+        }
+    }
+#endif
+
     Container x;
     x.name = c.name;
     x.command = c.command;
@@ -103,6 +113,11 @@ RunResult run_container(const Config& in) {
             return result;
         }
         if (pid == 0) {
+            if (!c.rootfs.empty()) {
+                std::string rp = rootfs_path(c.rootfs);
+                if (chroot(rp.c_str()) != 0) _exit(126);
+                if (chdir("/") != 0) _exit(126);
+            }
             execl("/bin/sh", "sh", "-c", c.command.c_str(), (char*)0);
             _exit(127);
         }
