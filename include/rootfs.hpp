@@ -12,5 +12,6 @@ struct RootfsResult {
 };
 
 RootfsResult extract_rootfs(const std::string& tarball, const std::string& name, bool simulate);
+std::string rootfs_path(const std::string& name);
 
 }

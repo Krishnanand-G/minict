@@ -5,12 +5,14 @@
 
 namespace minict {
 
-RootfsResult extract_rootfs(const std::string& tarball, const std::string& name, bool sim) {
-    std::string base = state_dir() + "/rootfs";
-    std::string path = base + "/" + name;
+std::string rootfs_path(const std::string& name) {
+    return state_dir() + "/rootfs/" + name;
+}
 
+RootfsResult extract_rootfs(const std::string& tarball, const std::string& name, bool sim) {
+    std::string path = rootfs_path(name);
     ensure_dir(state_dir());
-    ensure_dir(base);
+    ensure_dir(state_dir() + "/rootfs");
     ensure_dir(path);
 
     if (sim) {
