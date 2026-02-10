@@ -1,1 +1,1 @@
-{"runtime":"minict","simulation":true,"containers":[{"name":"demo","command":"/bin/sh","state":"running","memory":"64m","cpu":50,"latency_ms":18},{"name":"build-agent","command":"make test","state":"stopped","memory":"256m","cpu":100,"latency_ms":42}]}
+{"runtime":"minict","simulation":true,"containers":[{"name":"demo","command":"/bin/sh","state":"running","memory":"64m","cpu":50,"latency_ms":22},{"name":"build-agent","command":"make test","state":"stopped","memory":"256m","cpu":100,"latency_ms":42}]}
