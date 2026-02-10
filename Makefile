@@ -1,7 +1,7 @@
 CXX ?= g++
 CXXFLAGS ?= -std=c++14 -Wall -Wextra -Iinclude -Ithird_party/minitest
 BUILD := build
-CORE := src/util.cpp src/namespace.cpp src/cgroup.cpp src/rootfs.cpp src/runtime.cpp
+CORE := src/util.cpp src/namespace.cpp src/cgroup.cpp src/rootfs.cpp src/runtime.cpp src/ipc.cpp src/daemon.cpp src/oci.cpp
 TESTS := $(wildcard tests/*.cpp)
 
 all: $(BUILD)/minict
