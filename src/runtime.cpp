@@ -72,7 +72,7 @@ RunResult run_container(const Config& in) {
         return result;
     }
 
-    bool sim = c.simulate || simulation_enabled();
+    bool sim = simulation_enabled();
     long long start = now_ms();
 
     NamespaceResult ns = setup_namespaces(sim);

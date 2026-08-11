@@ -8,10 +8,6 @@
 
 namespace minict {
 
-static std::string rootfs_dir(const std::string& name) {
-    return rootfs_path(name);
-}
-
 static std::string digest_to_blob(const std::string& digest) {
     size_t colon = digest.find(':');
     std::string hex = colon == std::string::npos ? digest : digest.substr(colon + 1);
@@ -55,7 +51,7 @@ static std::string resolve_layout_dir(const std::string& path, bool sim) {
 }
 
 OciResult load_oci(const std::string& in_path, const std::string& name, bool sim) {
-    std::string dest = rootfs_dir(name);
+    std::string dest = rootfs_path(name);
     ensure_dir(state_dir());
     ensure_dir(state_dir() + "/rootfs");
     ensure_dir(dest);

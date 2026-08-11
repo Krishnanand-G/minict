@@ -9,7 +9,6 @@ static Config sample(const std::string& name) {
     c.name = name;
     c.command = "echo hello";
     c.limits = Limits("64m", 50);
-    c.simulate = true;
     return c;
 }
 

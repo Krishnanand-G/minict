@@ -12,7 +12,7 @@ using namespace minict;
 
 static void usage() {
     std::cout
-        << "minict run [--memory 64m] [--cpu 50] [--name demo] [--rootfs name] [--image name] command\n"
+        << "minict run [--memory 64m] [--cpu 50] [--name demo] [--image name] command\n"
         << "minict ps | kill NAME | stats | daemon | load-oci PATH NAME | pull-rootfs TARBALL NAME\n";
 }
 
@@ -137,14 +137,12 @@ int main(int argc, char** argv) {
 
     if (op == "run") {
         Config c;
-        c.simulate = simulation_enabled();
         int i = 2;
         for (; i < argc; ++i) {
             std::string v = argv[i];
             if (v == "--memory" && i + 1 < argc) c.limits.memory = argv[++i];
             else if (v == "--cpu" && i + 1 < argc) c.limits.cpu = std::atoi(argv[++i]);
             else if (v == "--name" && i + 1 < argc) c.name = argv[++i];
-            else if (v == "--rootfs" && i + 1 < argc) c.rootfs = argv[++i];
             else if (v == "--image" && i + 1 < argc) c.rootfs = argv[++i];
             else break;
         }

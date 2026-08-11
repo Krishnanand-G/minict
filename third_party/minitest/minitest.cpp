@@ -19,7 +19,7 @@ Register::Register(const char* n, void (*f)()) {
     registry().push_back(t);
 }
 
-void fail(const char* f, int l, const std::string& m, bool) {
+void fail(const char* f, int l, const std::string& m) {
     ++failures();
     std::cerr << f << ":" << l << ": " << m << "\n";
 }
@@ -38,4 +38,8 @@ int RUN_ALL_TESTS() {
     return failures() ? 1 : 0;
 }
 
+}
+
+int main() {
+    return minitest::RUN_ALL_TESTS();
 }

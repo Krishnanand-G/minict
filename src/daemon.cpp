@@ -59,11 +59,9 @@ static std::string handle_request(const std::string& req) {
 
     if (op == "run") {
         Config c;
-        c.simulate = simulation_enabled();
         c.name = json_get_string(req, "name");
         c.command = json_get_string(req, "command");
-        c.rootfs = json_get_string(req, "rootfs");
-        if (c.rootfs.empty()) c.rootfs = json_get_string(req, "image");
+        c.rootfs = json_get_string(req, "image");
         c.limits.memory = json_get_string(req, "memory");
         c.limits.cpu = json_get_int(req, "cpu", 0);
 

@@ -1,4 +1,5 @@
 #include "minitest.hpp"
+#include "config.hpp"
 #include "util.hpp"
 
 using namespace minict;
@@ -30,4 +31,16 @@ TEST(Util, WriteReadFile) {
 
 TEST(Util, JsonEscapesQuotes) {
     EXPECT_EQ(json_escape("a\"b"), "a\\\"b");
+}
+
+TEST(Limits, Defaults) {
+    Limits x;
+    EXPECT_EQ(x.memory, "0");
+    EXPECT_EQ(x.cpu, 0);
+}
+
+TEST(Limits, Values) {
+    Limits x("64m", 50);
+    EXPECT_EQ(x.memory, "64m");
+    EXPECT_EQ(x.cpu, 50);
 }

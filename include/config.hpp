@@ -14,8 +14,6 @@ struct Config {
     std::string command;
     std::string rootfs;
     Limits limits;
-    bool simulate;
-    Config() : simulate(false) {}
 };
 
 bool simulation_enabled();
