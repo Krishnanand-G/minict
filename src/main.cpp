@@ -168,10 +168,12 @@ int main(int argc, char** argv) {
             }
         }
 
+        // in-process mode: stay attached to the container (docker run semantics)
+        c.wait_exit = true;
         RunResult x = run_container(c);
         if (x.ok) {
-            std::cout << "started " << x.container.name
-                      << " in " << x.container.latency_ms << "ms\n";
+            std::cout << x.container.name << ": " << x.detail
+                      << " (start latency " << x.container.latency_ms << "ms)\n";
             return 0;
         }
         std::cout << "error: " << x.detail << "\n";

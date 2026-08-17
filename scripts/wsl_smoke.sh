@@ -4,8 +4,15 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 make clean all
 
-export MINICT_STATE_DIR=".minict-smoke"
-rm -rf "$MINICT_STATE_DIR"
+export MINICT_SIM=1
+STATE_DIR="$(mktemp -d)"
+export MINICT_STATE_DIR="$STATE_DIR"
+DPID=""
+cleanup() {
+  if [[ -n "$DPID" ]]; then kill "$DPID" 2>/dev/null || true; fi
+  rm -rf "$STATE_DIR"
+}
+trap cleanup EXIT
 
 ./build/minict load-oci tests/fixtures/oci-tiny alpine-smoke
 ./build/minict daemon &
@@ -16,6 +23,4 @@ sleep 0.5
 ./build/minict ps | grep smoke-demo
 ./build/minict kill smoke-demo
 
-kill "$DPID" 2>/dev/null || true
-rm -rf "$MINICT_STATE_DIR"
 echo "wsl smoke ok"

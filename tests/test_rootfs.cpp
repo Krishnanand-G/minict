@@ -10,3 +10,9 @@ TEST(Rootfs, Simulation) {
     EXPECT_TRUE(r.path.find("ubuntu-marker") != std::string::npos);
     EXPECT_TRUE(read_file(r.path + "/.minict-rootfs").find("base.tar") != std::string::npos);
 }
+
+
+TEST(Rootfs, RejectsUnsafeNames) {
+    EXPECT_TRUE(!extract_rootfs("base.tar", "../escape", true).ok);
+    EXPECT_TRUE(!extract_rootfs("base.tar", "nested/name", true).ok);
+}

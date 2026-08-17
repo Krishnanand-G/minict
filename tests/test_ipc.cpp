@@ -24,3 +24,8 @@ TEST(IpcJson, ReplyShape) {
     EXPECT_TRUE(r.find("\"ok\":true") != std::string::npos);
     EXPECT_TRUE(r.find("body text") != std::string::npos);
 }
+
+
+TEST(IpcJson, UnescapesNewlines) {
+    EXPECT_TRUE(json_get_string("{\"body\":\"one\\ntwo\"}", "body") == "one\ntwo");
+}

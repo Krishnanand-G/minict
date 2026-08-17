@@ -2,6 +2,7 @@
 #include "namespace.hpp"
 #include "cgroup.hpp"
 #include "rootfs.hpp"
+#include "sandbox.hpp"
 #include "util.hpp"
 #include <cstdlib>
 #include <sstream>
@@ -11,9 +12,38 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <signal.h>
+#include <sched.h>
+#include <cstring>
+#include <cerrno>
 #endif
 
 namespace minict {
+
+#ifdef __linux__
+// new pid/mount/uts/ipc/net namespaces, applied via clone(2) in the child so
+// the daemon itself never leaves the host's namespaces
+static int kCloneFlags = SIGCHLD | CLONE_NEWPID | CLONE_NEWNS | CLONE_NEWUTS
+    | CLONE_NEWIPC | CLONE_NEWNET;
+
+struct RunArgs {
+    const char* command;
+    const char* rootfs;
+    const char* name;
+};
+
+// runs in the freshly cloned child: its own namespaces are already set up by
+// clone(2); now harden the process and exec the user command.
+static int child_main(void* arg) {
+    RunArgs* a = static_cast<RunArgs*>(arg);
+    if (a->name && a->name[0]) {
+        sethostname(a->name, std::char_traits<char>::length(a->name));
+    }
+    SandboxResult sb = setup_sandbox(a->rootfs, false);
+    if (!sb.ok) _exit(125); // sandbox setup failed
+    execl("/bin/sh", "sh", "-c", a->command, (char*)0);
+    _exit(127); // command not found / exec failed
+}
+#endif
 
 static std::string db() {
     return state_dir() + "/containers.tsv";
@@ -75,10 +105,12 @@ RunResult run_container(const Config& in) {
     bool sim = simulation_enabled();
     long long start = now_ms();
 
-    NamespaceResult ns = setup_namespaces(sim);
-    if (!ns.ok) {
-        result.detail = ns.detail;
-        return result;
+    if (sim) {
+        NamespaceResult ns = setup_namespaces(true);
+        if (!ns.ok) {
+            result.detail = ns.detail;
+            return result;
+        }
     }
 
     CgroupResult cg = apply_limits(c.name, c.limits, sim);
@@ -106,26 +138,46 @@ RunResult run_container(const Config& in) {
     x.pid = 0;
 
 #ifdef __linux__
+    pid_t pid = -1;
     if (!sim) {
-        pid_t pid = fork();
+        std::string rp = c.rootfs.empty() ? "" : rootfs_path(c.rootfs);
+        RunArgs args;
+        args.command = c.command.c_str();
+        args.rootfs = rp.c_str();
+        args.name = c.name.c_str();
+        // 1 MiB stack for the clone child (grows down on x86_64)
+        static char child_stack[1 << 20];
+        pid = clone(child_main, child_stack + sizeof(child_stack), kCloneFlags, &args);
         if (pid < 0) {
-            result.detail = "fork failed";
+            result.detail = std::string("clone failed: ") + std::strerror(errno);
             return result;
         }
-        if (pid == 0) {
-            if (!c.rootfs.empty()) {
-                std::string rp = rootfs_path(c.rootfs);
-                if (chroot(rp.c_str()) != 0) _exit(126);
-                if (chdir("/") != 0) _exit(126);
-            }
-            execl("/bin/sh", "sh", "-c", c.command.c_str(), (char*)0);
-            _exit(127);
-        }
         x.pid = pid;
+        // move the container into its cgroup so the memory/cpu limits apply
+        attach_pid(c.name, (long)pid, sim);
     }
+#else
+    pid_t pid = -1;
 #endif
 
     x.latency_ms = now_ms() - start;
+
+#ifdef __linux__
+    // in-process mode: stay alive as the container's parent. Orphaning a
+    // nested-namespace PID 1 is racy, and a waiting parent keeps stdio and the
+    // container lifecycle deterministic (docker run behaves this way).
+    if (!sim && c.wait_exit) {
+        int status = 0;
+        waitpid(pid, &status, 0);
+        if (WIFEXITED(status)) {
+            x.state = "exited";
+            result.detail = "exited (" + std::to_string(WEXITSTATUS(status)) + ")";
+        } else {
+            x.state = "killed";
+            result.detail = "terminated by signal " + std::to_string(WTERMSIG(status));
+        }
+    }
+#endif
 
     std::vector<Container> all = list_containers();
     all.push_back(x);
@@ -133,7 +185,7 @@ RunResult run_container(const Config& in) {
 
     result.ok = true;
     result.container = x;
-    result.detail = sim ? "simulated start complete" : "container started";
+    if (result.detail.empty()) result.detail = sim ? "simulated start complete" : "container started";
     return result;
 }
 

@@ -1,6 +1,12 @@
 #include "cgroup.hpp"
 #include "util.hpp"
 #include <cstdlib>
+#include <cerrno>
+#ifdef __linux__
+#include <unistd.h>
+#else
+#include <direct.h>
+#endif
 
 namespace minict {
 
@@ -30,6 +36,10 @@ CgroupResult apply_limits(const std::string& name, const Limits& limits, bool si
     if (!ensure_dir("/sys/fs/cgroup/minict") || !ensure_dir(path)) {
         return CgroupResult(false, path, "cannot create cgroup; root privileges may be required");
     }
+    // a fresh cgroup has no controllers enabled in its subtree_control, so its
+    // children would get no memory.max / cpu.max files at all. Enable the ones
+    // we use (idempotent — same as what systemd/runc do).
+    write_file("/sys/fs/cgroup/minict/cgroup.subtree_control", "+memory +cpu\n");
     bool ok = write_file(path + "/memory.max", mem) && write_file(path + "/cpu.max", cpu);
     return CgroupResult(ok, path, ok ? "cgroup v2 limits applied" : "unable to write cgroup limits");
 #else
@@ -37,14 +47,18 @@ CgroupResult apply_limits(const std::string& name, const Limits& limits, bool si
 #endif
 }
 
+bool attach_pid(const std::string& name, long pid, bool simulate) {
+    std::string p = cg_path(name, simulate) + "/cgroup.procs";
+    return write_file(p, std::to_string(pid) + "\n");
+}
+
 bool remove_limits(const std::string& name, bool sim) {
     std::string path = cg_path(name, sim);
 #ifdef _WIN32
-    std::string cmd = "rmdir \"" + path + "\" 2>nul";
+    return _rmdir(path.c_str()) == 0 || errno == ENOENT;
 #else
-    std::string cmd = "rmdir '" + path + "' 2>/dev/null";
+    return ::rmdir(path.c_str()) == 0 || errno == ENOENT;
 #endif
-    return std::system(cmd.c_str()) == 0;
 }
 
 }

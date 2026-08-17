@@ -11,5 +11,6 @@ bool write_file(const std::string& path, const std::string& contents);
 std::string read_file(const std::string& path);
 long long now_ms();
 std::string json_escape(const std::string& value);
+bool run_process(const std::vector<std::string>& args);
 
 }

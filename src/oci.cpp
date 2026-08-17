@@ -5,12 +5,18 @@
 #include <cstdlib>
 #include <sstream>
 #include <vector>
+#include <cctype>
 
 namespace minict {
 
 static std::string digest_to_blob(const std::string& digest) {
-    size_t colon = digest.find(':');
-    std::string hex = colon == std::string::npos ? digest : digest.substr(colon + 1);
+    const std::string prefix = "sha256:";
+    if (digest.compare(0, prefix.size(), prefix) != 0) return "";
+    std::string hex = digest.substr(prefix.size());
+    if (hex.size() != 64) return "";
+    for (size_t i = 0; i < hex.size(); ++i) {
+        if (!std::isxdigit(static_cast<unsigned char>(hex[i]))) return "";
+    }
     return "blobs/sha256/" + hex;
 }
 
@@ -40,8 +46,7 @@ static std::string resolve_layout_dir(const std::string& path, bool sim) {
         ensure_dir(tmp);
         if (sim) return path;
 #ifdef __linux__
-        std::string cmd = "tar -xf '" + path + "' -C '" + tmp + "'";
-        if (std::system(cmd.c_str()) != 0) return "";
+        if (!run_process({"tar", "-xf", path, "-C", tmp})) return "";
         return tmp;
 #else
         return "";
@@ -51,6 +56,13 @@ static std::string resolve_layout_dir(const std::string& path, bool sim) {
 }
 
 OciResult load_oci(const std::string& in_path, const std::string& name, bool sim) {
+    if (name.empty() || name == "." || name == "..") return OciResult(false, "", "invalid image name");
+    for (size_t i = 0; i < name.size(); ++i) {
+        unsigned char c = static_cast<unsigned char>(name[i]);
+        if (!(std::isalnum(c) || name[i] == '-' || name[i] == '_' || name[i] == '.')) {
+            return OciResult(false, "", "invalid image name");
+        }
+    }
     std::string dest = rootfs_path(name);
     ensure_dir(state_dir());
     ensure_dir(state_dir() + "/rootfs");
@@ -72,7 +84,9 @@ OciResult load_oci(const std::string& in_path, const std::string& name, bool sim
         return OciResult(false, dest, "no manifest in index");
     }
 
-    std::string manifest_path = layout + "/" + digest_to_blob(manifests[0]);
+    std::string manifest_blob = digest_to_blob(manifests[0]);
+    if (manifest_blob.empty()) return OciResult(false, dest, "invalid manifest digest");
+    std::string manifest_path = layout + "/" + manifest_blob;
     std::string manifest = read_file(manifest_path);
     if (manifest.empty()) {
         return OciResult(false, dest, "manifest blob missing");
@@ -94,10 +108,10 @@ OciResult load_oci(const std::string& in_path, const std::string& name, bool sim
 
 #ifdef __linux__
     for (size_t i = 0; i < layers.size(); ++i) {
-        std::string blob = layout + "/" + digest_to_blob(layers[i]);
-        std::string cmd = "tar -xf '" + blob + "' -C '" + dest + "' 2>/dev/null || "
-                          "tar -xzf '" + blob + "' -C '" + dest + "'";
-        if (std::system(cmd.c_str()) != 0) {
+        std::string relative_blob = digest_to_blob(layers[i]);
+        if (relative_blob.empty()) return OciResult(false, dest, "invalid layer digest: " + layers[i]);
+        std::string blob = layout + "/" + relative_blob;
+        if (!run_process({"tar", "-xf", blob, "-C", dest})) {
             return OciResult(false, dest, "layer unpack failed: " + layers[i]);
         }
     }

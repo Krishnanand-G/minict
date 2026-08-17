@@ -13,6 +13,8 @@ struct CgroupResult {
 };
 
 CgroupResult apply_limits(const std::string& name, const Limits& limits, bool simulate);
+// move a container pid into the cgroup so the limits actually apply to it
+bool attach_pid(const std::string& name, long pid, bool simulate);
 bool remove_limits(const std::string& name, bool simulate);
 
 }

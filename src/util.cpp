@@ -3,7 +3,19 @@
 #include <chrono>
 #include <cstdlib>
 #include <fstream>
+#include <cerrno>
+
+#ifdef __linux__
+#include <sys/stat.h>
+#else
+#include <direct.h>
+#endif
 #include <sstream>
+
+#ifdef __linux__
+#include <sys/wait.h>
+#include <unistd.h>
+#endif
 
 #ifdef _WIN32
 #include <direct.h>
@@ -27,12 +39,31 @@ std::vector<std::string> split(const std::string& s, char d) {
 }
 
 bool ensure_dir(const std::string& p) {
+    if (p.empty()) return false;
+    std::string current;
+    size_t begin = 0;
+    if (p[0] == '/') {
+        current = "/";
+        begin = 1;
+    }
+    for (size_t i = begin; i <= p.size(); ++i) {
+        const bool boundary = i == p.size() || p[i] == '/' || p[i] == '\\';
+        if (!boundary) {
+            current += p[i];
+            continue;
+        }
+        if (current.empty() || current == "/") {
+            if (i < p.size()) current += p[i];
+            continue;
+        }
 #ifdef _WIN32
-    std::string cmd = "if not exist \"" + p + "\" mkdir \"" + p + "\"";
+        if (_mkdir(current.c_str()) != 0 && errno != EEXIST) return false;
 #else
-    std::string cmd = "mkdir -p '" + p + "'";
+        if (mkdir(current.c_str(), 0755) != 0 && errno != EEXIST) return false;
 #endif
-    return std::system(cmd.c_str()) == 0;
+        if (i < p.size()) current += p[i];
+    }
+    return true;
 }
 
 bool write_file(const std::string& p, const std::string& s) {
@@ -73,6 +104,29 @@ bool simulation_enabled() {
 std::string state_dir() {
     const char* v = std::getenv("MINICT_STATE_DIR");
     return v ? v : ".minict";
+}
+
+
+bool run_process(const std::vector<std::string>& args) {
+    if (args.empty()) return false;
+#ifdef __linux__
+    pid_t child = fork();
+    if (child < 0) return false;
+    if (child == 0) {
+        std::vector<char*> argv;
+        for (size_t i = 0; i < args.size(); ++i) {
+            argv.push_back(const_cast<char*>(args[i].c_str()));
+        }
+        argv.push_back(0);
+        execvp(argv[0], argv.data());
+        _exit(127);
+    }
+    int status = 0;
+    if (waitpid(child, &status, 0) < 0) return false;
+    return WIFEXITED(status) && WEXITSTATUS(status) == 0;
+#else
+    return false;
+#endif
 }
 
 }

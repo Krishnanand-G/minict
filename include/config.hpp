@@ -14,6 +14,7 @@ struct Config {
     std::string command;
     std::string rootfs;
     Limits limits;
+    bool wait_exit = false; // in-process mode: block until the container exits
 };
 
 bool simulation_enabled();

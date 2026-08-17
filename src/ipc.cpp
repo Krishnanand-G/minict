@@ -40,7 +40,13 @@ static std::string find_json_value(const std::string& json, const std::string& k
         while (pos < json.size() && json[pos] != '"') {
             if (json[pos] == '\\' && pos + 1 < json.size()) {
                 ++pos;
-                out += json[pos++];
+                switch (json[pos]) {
+                    case 'n': out += '\n'; break;
+                    case 'r': out += '\r'; break;
+                    case 't': out += '\t'; break;
+                    default: out += json[pos]; break;
+                }
+                ++pos;
             } else {
                 out += json[pos++];
             }

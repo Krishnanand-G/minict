@@ -11,6 +11,8 @@
 #ifdef __linux__
 #include <unistd.h>
 #include <sys/socket.h>
+#include <sys/wait.h>
+#include <csignal>
 #endif
 
 namespace minict {
@@ -81,6 +83,11 @@ static std::string handle_request(const std::string& req) {
 
 int run_daemon() {
 #ifdef __linux__
+    // containers are forked from the daemon; reap them so they don't stay zombies
+    signal(SIGCHLD, [](int) {
+        while (waitpid(-1, 0, WNOHANG) > 0) {}
+    });
+
     int listen_fd = ipc_listen_socket();
     if (listen_fd < 0) {
         std::cerr << "error: could not bind " << socket_path() << "\n";

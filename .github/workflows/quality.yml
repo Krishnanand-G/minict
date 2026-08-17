@@ -1,0 +1,19 @@
+name: C++ quality
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  quality:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install quality tools
+        run: sudo apt-get update && sudo apt-get install -y clang shellcheck
+      - name: Build and test with GCC warnings
+        run: CXX=g++ CXXFLAGS='-std=c++14 -Wall -Wextra -Wpedantic -Iinclude -Ithird_party/minitest' make clean test
+      - name: Build and test with Clang sanitizers
+        run: CXX=clang++ CXXFLAGS='-std=c++14 -Wall -Wextra -Wpedantic -Iinclude -Ithird_party/minitest -fsanitize=address,undefined -fno-omit-frame-pointer' make clean test
+      - name: Check shell scripts
+        run: shellcheck scripts/*.sh
