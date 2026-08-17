@@ -18,6 +18,8 @@ echo "== load alpine rootfs =="
 RUN pull-rootfs rootfs/alpine-minirootfs.tar.gz alpine
 
 echo "== run with hardening =="
+# The command is single-quoted so substitutions run inside the container.
+# shellcheck disable=SC2016
 RUN run --memory 64m --cpu 50 --name real-demo --image alpine \
   'sleep 1; echo HOST=$(hostname); echo CGROUP=$(head -1 /proc/self/cgroup); grep -E "^CapEff|^Seccomp" /proc/self/status'
 
