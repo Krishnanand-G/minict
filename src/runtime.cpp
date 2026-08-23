@@ -156,8 +156,6 @@ RunResult run_container(const Config& in) {
         // move the container into its cgroup so the memory/cpu limits apply
         attach_pid(c.name, (long)pid, sim);
     }
-#else
-    pid_t pid = -1;
 #endif
 
     x.latency_ms = now_ms() - start;
